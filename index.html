@@ -2549,7 +2549,7 @@ function stopVideoRecording() {
 }
 
 /* ==========================
-   Mock AI analysis for multiple photos - REALISTIC SCANNING
+   Mock AI analysis for multiple photos - MODIFIED FOR HEALTH PROGRESSION
    ========================== */
 function mockMultiPhotoAIAnalyze(photos) {
   // Track scan count for realistic progression
@@ -2592,45 +2592,64 @@ function mockMultiPhotoAIAnalyze(photos) {
     }
   }
   
-  // Generate realistic health data based on scan count
-  let woundDetected = false;
+  // MODIFIED: Fixed health progression based on scan count
   let overallHealth = "Good";
-
-  // First scan: usually healthy
+  let issueType = null;
+  let recommendations = [];
+  
+  // First scan: Cow is sick
   if (STATE.scanCount === 1) {
-    woundDetected = Math.random() < 0.1; // 10% chance
+    overallHealth = "Critical";
+    issueType = "Fever & Loss of Appetite";
+    recommendations = [
+      "Administer antibiotic injection (Penicillin 20,000 IU/kg IM)",
+      "Provide electrolyte solution in drinking water",
+      "Isolate from herd for 3 days",
+      "Monitor temperature twice daily"
+    ];
   }
-  // Second scan: might have issues
+  // Second scan: Better but needs attention
   else if (STATE.scanCount === 2) {
-    woundDetected = Math.random() < 0.3; // 30% chance
+    overallHealth = "Warning";
+    issueType = "Recovering but weak";
+    recommendations = [
+      "Continue antibiotic course for 2 more days",
+      "Add vitamin B complex to feed",
+      "Provide warm shelter",
+      "Offer high-energy feed supplements"
+    ];
   }
-  // Third scan: higher chance of issues
+  // Third scan: Mostly healthy
   else if (STATE.scanCount === 3) {
-    woundDetected = Math.random() < 0.5; // 50% chance
+    overallHealth = "Good";
+    issueType = null;
+    recommendations = [
+      "Continue monitoring for 1 week",
+      "Gradually reintroduce to herd",
+      "Maintain regular feeding schedule"
+    ];
   }
-  // Subsequent scans: varied
+  // Subsequent scans: Usually healthy
   else {
-    woundDetected = Math.random() < 0.25;
-  }
-
-  // Determine overall health (based on wound detection only)
-  if (woundDetected) {
-    overallHealth = Math.random() < 0.7 ? "Critical" : "Warning";
+    overallHealth = "Good";
+    issueType = null;
+    recommendations = ["No treatment needed", "Continue regular health checks"];
   }
   
   // Generate results
   const breed = breeds[Math.floor(Math.random() * breeds.length)];
-  const confidence = 0.7 + (photoCount * 0.05) + (matchedAnimal ? 0.1 : 0); // Higher confidence for matches
+  const confidence = 0.7 + (photoCount * 0.05) + (matchedAnimal ? 0.1 : 0);
   
   return {
     is_new_animal: isNewAnimal,
     matched_animal: matchedAnimal,
-    wound_detected: woundDetected,
-    wound_location: woundDetected ? ["hind leg", "front leg", "back", "side", "neck"][Math.floor(Math.random() * 5)] : null,
+    issue_detected: issueType !== null,
+    issue_type: issueType,
+    recommendations: recommendations,
     confidence: Math.min(confidence, 0.95).toFixed(2),
     breed_detected: breed,
     overall_health: overallHealth,
-    movement_score: woundDetected ? "Restricted" : "Active",
+    movement_score: STATE.scanCount === 1 ? "Lethargic" : (STATE.scanCount === 2 ? "Slow" : "Active"),
     photos_analyzed: photoCount,
     analysis_notes: `Analyzed ${photoCount} photos. ${isNewAnimal ? "New cattle detected." : "Matched existing cattle."}`,
     suggested_name: cattleNames[Math.floor(Math.random() * cattleNames.length)],
@@ -2638,7 +2657,7 @@ function mockMultiPhotoAIAnalyze(photos) {
   };
 }
 
-/* Mock video analysis */
+/* Mock video analysis - MODIFIED FOR HEALTH PROGRESSION */
 function mockVideoAIAnalyze(videoBlob) {
   STATE.scanCount = (STATE.scanCount || 0) + 1;
   
@@ -2653,26 +2672,48 @@ function mockVideoAIAnalyze(videoBlob) {
     matchedAnimal = STATE.animals[Math.floor(Math.random() * STATE.animals.length)];
   }
   
-  // Health determination
-  const woundDetected = Math.random() < 0.25;
+  // MODIFIED: Fixed health progression for video analysis
   let overallHealth = "Good";
-
-  if (woundDetected) {
-    overallHealth = Math.random() < 0.7 ? "Critical" : "Warning";
+  let issueType = null;
+  let recommendations = [];
+  
+  if (STATE.scanCount === 1) {
+    overallHealth = "Critical";
+    issueType = "Fever & Lameness";
+    recommendations = [
+      "Administer anti-inflammatory (Flunixin 2.2 mg/kg IV)",
+      "Apply cold compress to affected leg",
+      "Restrict movement for 48 hours",
+      "Provide soft bedding"
+    ];
+  } else if (STATE.scanCount === 2) {
+    overallHealth = "Warning";
+    issueType = "Improving but still limping";
+    recommendations = [
+      "Continue anti-inflammatory treatment",
+      "Gentle exercise twice daily",
+      "Monitor walking pattern",
+      "Check for swelling reduction"
+    ];
+  } else {
+    overallHealth = "Good";
+    issueType = null;
+    recommendations = ["Normal movement observed", "Continue regular checks"];
   }
   
   // Video-specific analysis
-  const movementScore = woundDetected ? "Restricted" : 
-                       (Math.random() < 0.3 ? "Slightly impaired" : "Normal");
+  const movementScore = STATE.scanCount === 1 ? "Severely impaired" : 
+                       (STATE.scanCount === 2 ? "Slightly impaired" : "Normal");
   
-  const behaviorAnalysis = woundDetected ? "Favoring one leg" : 
-                          (Math.random() < 0.25 ? "Possible stiffness detected" : "Normal gait pattern");
+  const behaviorAnalysis = STATE.scanCount === 1 ? "Visible discomfort while walking" : 
+                          (STATE.scanCount === 2 ? "Improved gait but still favoring leg" : "Normal gait pattern");
   
   return {
     is_new_animal: isNewAnimal,
     matched_animal: matchedAnimal,
-    wound_detected: woundDetected,
-    wound_location: woundDetected ? "hind leg" : null,
+    issue_detected: issueType !== null,
+    issue_type: issueType,
+    recommendations: recommendations,
     confidence: (0.75 + Math.random() * 0.2).toFixed(2),
     breed_detected: breeds[Math.floor(Math.random() * breeds.length)],
     overall_health: overallHealth,
@@ -3068,23 +3109,24 @@ function processScanResults(result) {
                          (result.overall_health === 'Warning' ? 'Warning' : 'Good');
     animal.last_feed = new Date().toISOString();
 
-    // Create alert if problem detected (based on wound detection)
-    if (result.wound_detected){
+    // Create alert if issue detected (based on issue detection)
+    if (result.issue_detected){
       const alertId = 'a'+Date.now()+Math.floor(Math.random()*1000);
       const severity = result.overall_health === 'Critical' ? 'High' : 'Medium';
       const newAlert = { 
         alert_id: alertId, 
         animal_id: animal.id, 
-        type: 'Wound detected', 
+        type: result.issue_type || 'Health issue detected', 
         severity, 
         timestamp: new Date().toISOString(),
-        message: `Wound detected on ${result.wound_location}`
+        message: `${result.issue_type} - Follow recommendations`,
+        recommendations: result.recommendations
       };
       STATE.alerts.push(newAlert);
       animal.alerts = animal.alerts || []; 
       animal.alerts.push(newAlert);
       
-      showToast(`Alert created for ${animal.name}`, result.overall_health === 'Critical' ? 'error' : 'warning');
+      showToast(`Health alert for ${animal.name}`, result.overall_health === 'Critical' ? 'error' : 'warning');
     } else {
       showToast(`${animal.name} is healthy`, 'success');
     }
@@ -3126,17 +3168,18 @@ function processScanResults(result) {
       STATE.animals.push(newAnimal);
       matchedAnimal = newAnimal;
       
-      // Create alert if problem detected (wound only)
-      if (result.wound_detected){
+      // Create alert if issue detected
+      if (result.issue_detected){
         const alertId = 'a'+Date.now()+Math.floor(Math.random()*1000);
         const severity = result.overall_health === 'Critical' ? 'High' : 'Medium';
         const newAlert = { 
           alert_id: alertId, 
           animal_id: newAnimalId, 
-          type: 'Wound detected', 
+          type: result.issue_type || 'Health issue detected', 
           severity, 
           timestamp: new Date().toISOString(),
-          message: `Wound detected on ${result.wound_location}`
+          message: `${result.issue_type} - Follow treatment plan`,
+          recommendations: result.recommendations
         };
         STATE.alerts.push(newAlert);
         newAnimal.alerts.push(newAlert);
@@ -3149,23 +3192,24 @@ function processScanResults(result) {
                                    (result.overall_health === 'Warning' ? 'Warning' : 'Good');
       matchedAnimal.last_feed = new Date().toISOString();
 
-      // Create alert if problem detected (wound only)
-      if (result.wound_detected){
+      // Create alert if issue detected
+      if (result.issue_detected){
         const alertId = 'a'+Date.now()+Math.floor(Math.random()*1000);
         const severity = result.overall_health === 'Critical' ? 'High' : 'Medium';
         const newAlert = { 
           alert_id: alertId, 
           animal_id: matchedAnimal.id, 
-          type: 'Wound detected', 
+          type: result.issue_type || 'Health issue detected', 
           severity, 
           timestamp: new Date().toISOString(),
-          message: `Wound detected on ${result.wound_location}`
+          message: `${result.issue_type} - Requires attention`,
+          recommendations: result.recommendations
         };
         STATE.alerts.push(newAlert);
         matchedAnimal.alerts = matchedAnimal.alerts || [];
         matchedAnimal.alerts.push(newAlert);
         
-        showToast(`Alert for ${matchedAnimal.name}`, result.overall_health === 'Critical' ? 'error' : 'warning');
+        showToast(`Health alert for ${matchedAnimal.name}`, result.overall_health === 'Critical' ? 'error' : 'warning');
       } else {
         showToast(`${matchedAnimal.name} scanned - All good`, 'success');
       }
@@ -3188,7 +3232,7 @@ function processScanResults(result) {
   }
 }
 
-/* Show scan results modal */
+/* Show scan results modal - MODIFIED TO SHOW RECOMMENDATIONS */
 function showScanResults(result, matchedAnimal){
   // Store results globally for later use
   lastScanResult = result;
@@ -3302,19 +3346,42 @@ function showScanResults(result, matchedAnimal){
     `;
   }
   
-  // Add wound detection if present
-  if (result.wound_detected) {
+  // Add issue detection if present (REPLACED WOUND DETECTION)
+  if (result.issue_detected && result.issue_type) {
     resultsHTML += `
       <div class="scan-result-item">
-        <div class="scan-result-label">Wound Detected</div>
+        <div class="scan-result-label">Health Issue</div>
         <div class="scan-result-value scan-result-${result.overall_health === 'Critical' ? 'danger' : 'warning'}">
-          <i class="ri-alert-line"></i> ${result.wound_location}
+          <i class="ri-alert-line"></i> ${result.issue_type}
         </div>
       </div>
     `;
   }
   
   resultsHTML += `</div>`;
+  
+  // Add recommendations section if available
+  if (result.recommendations && result.recommendations.length > 0) {
+    resultsHTML += `
+      <div class="card" style="margin: 16px 0; padding: 16px;">
+        <div class="section-title" style="margin-bottom: 12px; color: var(--accent);">
+          <i class="ri-heart-pulse-line"></i> Treatment Recommendations
+        </div>
+        <ul style="padding-left: 20px; margin: 0;">
+    `;
+    
+    result.recommendations.forEach(rec => {
+      resultsHTML += `<li style="margin-bottom: 8px; color: var(--text-secondary);">${rec}</li>`;
+    });
+    
+    resultsHTML += `
+        </ul>
+        <div class="muted small" style="margin-top: 12px; font-style: italic;">
+          <i class="ri-information-line"></i> Consult a veterinarian for proper diagnosis
+        </div>
+      </div>
+    `;
+  }
   
   // Update results content
   el('#scan-results-content').innerHTML = resultsHTML;
